@@ -1,3 +1,8 @@
+# Unreleased
+
+- Authenticate proto release downloads with the optional `github-token` input and verify SHA-256
+  checksums. An empty token retains the installer script behavior.
+
 # 0.6.4
 
 - Updated action to Node.js v24.

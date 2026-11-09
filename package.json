@@ -8,7 +8,7 @@
     "check": "pnpm run lint && pnpm run test && pnpm run typecheck",
     "deps": "pnpm update --latest --interactive",
     "lint": "eslint --ext .ts,.js --fix .",
-    "test": "echo 'Not yet'",
+    "test": "node --test --require ts-node/register tests/*.test.ts",
     "test:input": "ts-node ./index.ts",
     "typecheck": "tsc --noEmit"
   },

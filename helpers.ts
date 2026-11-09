@@ -8,6 +8,7 @@ import * as cache from '@actions/cache';
 import * as core from '@actions/core';
 import * as glob from '@actions/glob';
 import * as tc from '@actions/tool-cache';
+import { installProto } from './proto';
 
 export const WINDOWS = process.platform === 'win32';
 
@@ -200,13 +201,8 @@ export function getMoonVersion(): string {
 	return core.getInput('moon-version') || 'latest';
 }
 
-export async function installBin(bin: string) {
-	core.info(`Installing \`${bin}\` globally`);
-
-	const version =
-		// eslint-disable-next-line no-nested-ternary
-		bin === 'proto' ? getProtoVersion() : bin === 'moon' ? getMoonVersion() : 'latest';
-
+async function installScript(bin: string, version: string, binDir: string) {
+	const envPrefix = bin.toUpperCase();
 	const scriptName = WINDOWS ? `${bin}.ps1` : `${bin}.sh`;
 	const scriptPath = path.join(getProtoHome(), 'temp', scriptName);
 
@@ -229,16 +225,27 @@ export async function installBin(bin: string) {
 
 	core.info('Executing installation script');
 
-	const binDir = getBinDir();
-	const binPath = path.join(binDir, WINDOWS ? `${bin}.exe` : bin);
-	const envPrefix = bin.toUpperCase();
-
 	await execa(script, version === 'latest' ? [] : [version], {
 		env: {
 			[`${envPrefix}_INSTALL_DIR`]: binDir,
 		},
 		stdio: core.isDebug() || !!process.env[`${envPrefix}_DEBUG`] ? 'inherit' : 'pipe',
 	});
+}
+
+export async function installBin(bin: string) {
+	core.info(`Installing \`${bin}\` globally`);
+	const version =
+		// eslint-disable-next-line no-nested-ternary
+		bin === 'proto' ? getProtoVersion() : bin === 'moon' ? getMoonVersion() : 'latest';
+	const token = core.getInput('github-token');
+	const binDir = getBinDir();
+	const binPath = path.join(binDir, WINDOWS ? `${bin}.exe` : bin);
+	const envPrefix = bin.toUpperCase();
+
+	await (bin === 'proto' && token
+		? installProto(version, token, binDir)
+		: installScript(bin, version, binDir));
 
 	core.info(`Installed binary to ${binPath}`);
 
@@ -250,7 +257,6 @@ export async function installBin(bin: string) {
 		if (result.stdout) {
 			const v = result.stdout.replace(bin, '').trim();
 
-			// eslint-disable-next-line require-atomic-updates
 			process.env[`${envPrefix}_CLI_VERSION`] = v;
 			core.saveState(`${envPrefix}_CLI_VERSION`, v);
 

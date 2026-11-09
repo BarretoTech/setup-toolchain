@@ -29,6 +29,9 @@ jobs:
 
 ## Inputs
 
+- `github-token` - Token for downloading proto through the GitHub release API with SHA-256
+  verification. Defaults to `${{ github.token }}`. An empty string retains the installer script
+  path. Authenticated download or checksum failures fail setup without an unauthenticated retry.
 - `auto-install` - Auto-install proto tools by running `proto install`. Defaults to `false`.
 - `auto-setup` - Auto-setup moon toolchains by running `moon setup`. Defaults to `false`.
 - `cache` - Toggle caching of the toolchain directory. Defaults to `true`.
